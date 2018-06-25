@@ -156,8 +156,9 @@ class Spider(object):
         :return:
         """
         f = self._thread_pool.is_over()
-        if f:
+        if not f:
             self.persist2db()
+            return f
         return f
 
     def persist2db(self):
@@ -170,8 +171,9 @@ class Spider(object):
             t = self.url_keyword
             self.url_keyword = {}
 
-        urls = [(self.keyword, url) for url in t]
-        self.db.batch_insert(urls)
+        for url in t:
+            content = self._session.get(url).content.decode("utf8", "ignore")
+            self.db.insert(self.keyword, url, content)
 
     def progress(self) -> tuple:
         """

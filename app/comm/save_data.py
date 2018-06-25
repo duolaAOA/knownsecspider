@@ -23,12 +23,30 @@ class SqliteBase:
         """
         try:
             self.c.executemany(
-                '''INSERT INTO {table_name} (keyword, url) VALUES (?, ?)'''.format(table_name=self.table_name), data)
+                '''INSERT INTO {table_name} (keyword, url, content) VALUES (?, ?, ?)'''.format(table_name=self.table_name), data)
             logging.info('batch insert {} into {} {} items'.format(data, self.table_name, len(data)))
             self.conn.commit()
         except:
             self.conn.rollback()
             logging.error("insert fail!")
+
+    def insert(self, keyword, url, content):
+        """
+        插入单条数据
+        如果数据格式不符合要求则不会执行插入操作
+        :param data:
+        :return:
+        """
+        data = (keyword, url, content)
+        try:
+            self.c.execute(
+                '''INSERT INTO {table_name} (keyword, url, content) VALUES (?, ?, ?)'''.
+                    format(table_name=self.table_name), data)
+            logging.info('insert {} into {}'.format(url, self.table_name))
+            self.conn.commit()
+        except sqlite3.OperationalError:
+            self.conn.rollback()
+        logging.info('insert {} failed'.format(url))
 
     def make_dir(self):
         """
@@ -53,7 +71,7 @@ class SqliteBase:
         else:
             logging.debug('table {} not exists'.format(self.table_name))
             self.c.execute(
-                '''CREATE TABLE IF NOT EXISTS {table_name} (id INT PRIMARY KEY, keyword TEXT, url TEXT)'''.format
+                '''CREATE TABLE IF NOT EXISTS {table_name} (id INT PRIMARY KEY, keyword TEXT, url TEXT, content TEXT)'''.format
                 (table_name=self.table_name))
             logging.info('create table {}'.format(self.table_name))
 
